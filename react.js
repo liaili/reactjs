@@ -10,45 +10,37 @@ ReactDOMTextComponent.prototype.mountComponent = function(rootNodeID) {
   `
 }
 
-function ReactElement(type, key, props) {
-  this.type = type;
-  this.key = key;
-  this.props = props;
-}
-
 function ReactDOMElementComponent(node) {
-  this._currentElement = node;
+  this._currentNode = node;
   this._rootNodeID = null;
 }
 
 ReactDOMElementComponent.prototype.mountComponent = function(rootNodeID) {
   this._rootNodeID = rootNodeID;
-  var props = this._currentElement.props;
-  var tagOpen = '<' + this._currentElement.type;
-  var tagClose = '</' + this._currentElement.type + '>';
-  tagOpen += ' data-reactid=' + this._rootNodeID;
-  for (let propName in props) {
+  const { props, type } = this._currentNode;
+  var tagOpen = `<${type}`;
+  var tagClose = `</${type}>`;
+  tagOpen += ` reactid=${rootNodeID}`;
+  for (const propName in props) {
     if (/^on[A-Za-z]/.test(propName)) {
       var eventType = propName.replace('on', '');
-      $(document).delegate(`[data-reactid='${this._rootNodeID}']`, `${eventType}.${this._rootNodeID}`, props[propName]);
+      $(document).delegate(`[reactid=${rootNodeID}]`, eventType, props[propName])
     } else if (props[propName] && propName !== 'children') {
       tagOpen += ` ${propName}=${props[propName]}`;
     }
   }
-
+  var children = props.children;
+  var childrenInstance = [];
   var content = '';
-  var children = props.children || [];
-  var childrenInstances = [];
   for (let index = 0; index < children.length; index++) {
     var child = children[index];
-    var childComponentInstance = instantiantReactComponent(child);
-    childComponentInstance._mountIndex = index;
-    childrenInstances.push(childComponentInstance);
-    var curRootId = `${this._rootNodeID}.${index}`;
-    var childMarkup = childComponentInstance.mountComponent(curRootId);
-    content += childMarkup;  
+    var childInstance = instantiantReactComponent(child);
+    childInstance.mountIndex = index;
+    var rootIndex = `${rootNodeID}.${index}`;
+    var childMarkup = childInstance.mountComponent(rootIndex);
+    childrenInstance.push(childMarkup);
+    content += childMarkup;
   }
-  this._renderedChildren = childrenInstances;
   return tagOpen + '>' + content + tagClose;
 }
 
@@ -58,6 +50,12 @@ function instantiantReactComponent(node) {
   } else if (typeof node === 'object' && typeof node.type === 'string') {
     return new ReactDOMElementComponent(node);
   }
+}
+
+function ReactElement(type, key, props) {
+  this.type = type;
+  this.key = key;
+  this.props = props;
 }
 
 const React = {
@@ -70,9 +68,9 @@ const React = {
   createElement: function(type, config = {}, children) {
     var props = {};
     var key = config.key || undefined;
-    for(var propName in config) {
+    for (const propName in config) {
       if (config.hasOwnProperty(propName) && propName !== 'key') {
-        props[propName] = config[propName];
+          props[propName] = config[propName];      
       }
     }
 
@@ -82,7 +80,7 @@ const React = {
     } else {
       var childrenArray = [];
       for (let index = 0; index < childrenLength; index++) {
-        childrenArray.push(arguments[i+2]);
+        childrenArray.push(arguments[index + 2]);        
       }
       props.children = childrenArray;
     }
