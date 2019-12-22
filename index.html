@@ -14,8 +14,15 @@
   <div id="root"></div>
   <script src="./react.js"></script>
   <script>
+    function hello() {
+      alert('hello');
+    }
+    const element = React.createElement('div', {
+      id: 'test',
+      onclick: hello,
+    }, 'lick me');
     React.render(
-      'hello, world',
+      element,
       document.getElementById('root')
     );
   </script>
