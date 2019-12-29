@@ -10,6 +10,10 @@ ReactDOMTextComponent.prototype.mountComponent = function(rootNodeID) {
   `
 }
 
+function ReactClass() {}
+
+ReactClass.prototype.render = function() {}
+
 function ReactDOMElementComponent(node) {
   this._currentNode = node;
   this._rootNodeID = null;
@@ -44,11 +48,38 @@ ReactDOMElementComponent.prototype.mountComponent = function(rootNodeID) {
   return tagOpen + '>' + content + tagClose;
 }
 
+function ReactCompositeComponent(element) {
+  this._currentElement = element;
+  this._rootNodeID = null;
+  this.instance = null;
+}
+
+ReactCompositeComponent.prototype.mountComponent = function(rootNodeID) {
+  this._rootNodeID = rootNodeID;
+  var publicProps = this._currentElement.props;
+  var ReactClass = this._currentElement.type;
+  var inst = new ReactClass(publicProps);
+  this._instance = inst;
+  inst._reactInernalInstance = this;
+
+  if (inst.componentWillMount) {
+    inst.componentWillMount();
+  }
+  
+  var renderedElement = this._instance.render();
+  var renderedComponentInstance = instantiantReactComponent(renderedElement);
+  this._renderedComponent = renderedComponentInstance;
+  var renderedMarkup = renderedComponentInstance.mountComponent(this._rootNodeID);
+  return renderedMarkup;
+}
+
 function instantiantReactComponent(node) {
   if (typeof node === 'string' || typeof node === 'number') {
     return new ReactDOMTextComponent(node);
   } else if (typeof node === 'object' && typeof node.type === 'string') {
     return new ReactDOMElementComponent(node);
+  } else if (typeof node === 'object' && typeof node.type === 'function') {
+    return new ReactCompositeComponent(node);
   }
 }
 
@@ -85,5 +116,15 @@ const React = {
       props.children = childrenArray;
     }
     return new ReactElement(type, key, props);
+  },
+  createClass: function(spec) {
+    var Constructor = function(props) {
+      this.props = props;
+      this.state = this.getInitialState ? this.getInitialState() : {};
+    }
+    Constructor.prototype = new ReactClass();
+    Constructor.prototype.constructor = Constructor;
+    $.extend(Constructor.prototype, spec);
+    return Constructor;
   }
 }

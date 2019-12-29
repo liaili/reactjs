@@ -12,17 +12,42 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src="./react.js"></script>
+  <script src="react.js"></script>
   <script>
-    function hello() {
-      alert('hello');
-    }
-    const element = React.createElement('div', {
-      id: 'test',
-      onclick: hello,
-    }, 'lick me');
+    // function hello() {
+    //   alert('hello');
+    // }
+    // const element = React.createElement('div', {
+    //   id: 'test',
+    //   onclick: hello,
+    // }, 'lick me');
+    // React.render(
+    //   element,
+    //   document.getElementById('root')
+    // );
+    var HelloMessage = React.createClass({
+      getInitialState: function() {
+        return { type: 'say:' };
+      },
+      componentWillMount: function() {
+        console.log('我要开始渲染了。。。');
+      },
+      componentDidMount: function() {
+        console.log('我已经渲染好了。。。');
+      },
+      render: function() {
+        // { type, props: { children: [this.state.type, 'Hello ', this.props.name] }, key }
+        return React.createElement(
+          'div',
+          {},
+          this.state.type,
+          'Hello ',
+          this.props.name
+        );
+      }
+    });
     React.render(
-      element,
+      React.createElement(HelloMessage, { name: 'john' }), // { type, props }
       document.getElementById('root')
     );
   </script>
